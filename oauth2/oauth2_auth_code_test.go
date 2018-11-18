@@ -191,7 +191,7 @@ func TestAuthCodeWithDefaultStrategy(t *testing.T) {
 					require.NoError(t, jm.AddKeySet(context.TODO(), OpenIDConnectKeyName, keys))
 					jwtStrategy, err := jwk.NewRS256JWTStrategy(jm, OpenIDConnectKeyName)
 
-					fc.RefreshTokenLifespan = time.Second * 2
+					fc.RefreshTokenLifespan = time.Second * 3
 					handler := &Handler{
 						OAuth2: compose.Compose(
 							fc, fs.f, strat.s, hasher,
@@ -397,7 +397,7 @@ func TestAuthCodeWithDefaultStrategy(t *testing.T) {
 							expectIDToken:         true,
 							expectRefreshToken:    true,
 							assertRefreshToken: func(t *testing.T, token *oauth2.Token) {
-								time.Sleep(time.Second * 4)
+								time.Sleep(time.Second * 5)
 								token.Expiry = token.Expiry.Add(-time.Hour * 24)
 								_, err := oauthConfig.TokenSource(oauth2.NoContext, token).Token()
 								require.Error(t, err)
@@ -1057,7 +1057,7 @@ func TestAuthCodeWithMockStrategy(t *testing.T) {
 			consentStrategy := &consentMock{}
 			router := httprouter.New()
 			ts := httptest.NewServer(router)
-			store := NewFositeMemoryStore(hc.NewMemoryManager(hasher), time.Second)
+			store := NewFositeMemoryStore(hc.NewMemoryManager(hasher), time.Second*2)
 
 			l := logrus.New()
 			l.Level = logrus.DebugLevel
@@ -1071,7 +1071,7 @@ func TestAuthCodeWithMockStrategy(t *testing.T) {
 			handler := &Handler{
 				OAuth2: compose.Compose(
 					&compose.Config{
-						AccessTokenLifespan:        time.Second,
+						AccessTokenLifespan:        time.Second * 2,
 						SendDebugMessagesToClients: true,
 					},
 					store,
@@ -1342,7 +1342,7 @@ func TestAuthCodeWithMockStrategy(t *testing.T) {
 					})
 					t.Logf("Got token: %s", token.AccessToken)
 
-					time.Sleep(time.Second * 2)
+					time.Sleep(time.Millisecond * 1200) // Makes sure exp/iat/nbf time is different later on
 
 					res, err := testRefresh(t, token, ts.URL)
 					require.NoError(t, err)
